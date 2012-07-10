@@ -14,4 +14,7 @@
   #import <CoreData/CoreData.h>
 
   #import "StorageRoom.h"
+  #import "UIImageView+WebCache.h"
+  #import "MKAnnotationView+WebCache.h"
+  #import "UIButton+WebCache.h"
 #endif

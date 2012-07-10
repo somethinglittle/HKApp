@@ -17,6 +17,6 @@ extern NSString *const kSRAuthenticationTokenWithWriteAccess;
 extern NSString *const kSRCollectionAttractionID;
 extern NSString *const kSRCollectionSpotID;
 extern NSString *const kSRCollectionConfigID;
-extern NSString *const kSRCollectionCreditsID;
+extern NSString *const kSRCollectionPartnersID;
 
 id NilOrValue(id aValue);

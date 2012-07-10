@@ -7,6 +7,7 @@
 //
 
 #import "DataRequestDelegate.h"
+#import "AppManager.h"
 #import "AppConfigFetcher.h"
 #import "AppConfig.h"
 
@@ -15,10 +16,20 @@
 @interface AppConfigFetcher (private)
 
 -(AppConfig*) getAppConfig;
+-(void) checkPartnerDataDidFinish;
 
 @end
 
 @implementation AppConfigFetcher
+
+-(id) init;
+{
+  if (self = [super init]) {
+    _requestCount = 0;
+    _responseCount = 0;
+  }
+  return self;
+}
 
 -(id) initWithDelegate:(id<DataRequestConfigInfoDelegate>)delegate;
 {
@@ -26,6 +37,17 @@
     _delegate = delegate;
   }
   return self;
+}
+
+-(void) dealloc;
+{
+  if (_appConfig) {
+   _appConfig = nil; 
+  }
+  
+  if (_delegate) {
+    _delegate = nil;
+  }
 }
 
 -(AppConfig*) getAppConfig;
@@ -44,13 +66,30 @@
   [self makeConnectionWithUrl:urlFormat];
 }
 
--(void) partnerImageDidReceive:(UIImage*)image;
+-(void) partnerDataDidReceive:(UIImageView*)imageView;
 {
-  if (image) {
-    
-  } else {
+  if (imageView) {
+    [[[self getAppConfig] partnersArray] addObject:imageView];
+  }
+  _responseCount++;
+  [self checkPartnerDataDidFinish];
+}
+
+-(void) partnerDataDidError:(NSError*)error;
+{
+  NSLog(@"Error when loading partner data: %@", [error description]);
+  _responseCount++;
+  [self checkPartnerDataDidFinish];
+}
+
+-(void) checkPartnerDataDidFinish;
+{
+  if (_responseCount >= _requestCount) {
     if (_delegate && [_delegate respondsToSelector:@selector(appConfigDidReceive:)]) {
-      [_delegate appConfigDidReceive:_appConfig];
+      [_delegate appConfigDidReceive:[self getAppConfig]];
+    }
+    else {
+      NSLog(@"Error: delegate does not exist or does not response to appConfigDidReceive:");
     }
   }
 }
@@ -68,6 +107,8 @@
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)aConnection {
   NSLog(@"Downloading app config successful");
+  
+//  NSLog(@"DEBUG: %@", [[NSString alloc] initWithData:self.responseData encoding:NSUTF8StringEncoding]);
   
   @try {
     NSDictionary *jsonDict = [[CJSONDeserializer deserializer] deserialize:self.responseData error:nil];
@@ -91,21 +132,19 @@
     
     if ([configDict objectForKey:@"partners"]) {
       NSDictionary* partnersDict = [configDict objectForKey:@"partners"];
-      NSMutableArray* partnersArray = [NSMutableArray array];
+      
       
       for (NSDictionary* dict in partnersDict) {
         if ([dict objectForKey:@"url"]) {
           NSString* resUrl = [dict objectForKey:@"url"];
-          [partnersArray addObject:resUrl];
+          PartnersFetcher* partenersFetcher = [[PartnersFetcher alloc] initWithAppConfigFetcher:self andUrl:resUrl];
+          [partenersFetcher fetchData];
+          _requestCount++;
         }
       }
-      
-      PartnersFetcher* partenersFetcher = [[PartnersFetcher alloc] initWithAppConfigFetcher:self andEntriesArray:partnersArray];
-      [partenersFetcher fetchData];
-      
     } else {
       NSLog(@"Error: Partners array not exist");
-      [self partnerImageDidReceive:nil];
+      [self checkPartnerDataDidFinish];
     }
   
   }
@@ -130,21 +169,18 @@
 
 @implementation PartnersFetcher
 
--(id) initWithAppConfigFetcher:(AppConfigFetcher*)appConfigFetcher andEntriesArray:(NSArray*)entriesArray;
+-(id) initWithAppConfigFetcher:(AppConfigFetcher*)appConfigFetcher andUrl:(NSString*)url;
 {
   if (self = [self init]) {
     _appConfigFetcher = appConfigFetcher;
-    _entriesArray = entriesArray;
+    _url = url;
   }
   return self;
 }
 
 -(void) fetchData;
 {
-  for (NSString* url in _entriesArray) {
-    NSLog(@"%@", StorageRoomURLChangeMeta(url));
-    [self makeConnectionWithUrl:StorageRoomURLChangeMeta(url)];
-  }
+  [self makeConnectionWithUrl:StorageRoomURLChangeMeta(_url)];
 }
 
 #pragma mark -
@@ -161,8 +197,8 @@
   
   @try {
     
-    NSLog(@"%@", [[NSString alloc] initWithData:self.responseData encoding:NSUTF8StringEncoding]);
-    
+    NSLog(@"DEBUG: %@", [[NSString alloc] initWithData:self.responseData encoding:NSUTF8StringEncoding]);
+  
     NSDictionary *jsonDict = [[CJSONDeserializer deserializer] deserialize:self.responseData error:nil];
     if ([jsonDict objectForKey:@"error"])
     {
@@ -170,27 +206,28 @@
     }
     
     NSDictionary* resources = (NSDictionary *)[jsonDict objectForKey:@"entry"];
-    NSDictionary* companylogoDict = [resources objectForKey:@"companylogo"];
+    NSDictionary* partnerLogoDict =  [resources objectForKey:@"partnerlogo"];
+    NSString* imageUrl = [NSString string];
     
-    NSString* imageUrl = [companylogoDict objectForKey:@"meta_url"];
+//    NSString* partnerType = [resources objectForKey:@"partnertype"];
+//    NSString* partnerName = [resources objectForKey:@"partnername"];
+
+    if ([AppManager isRetinaDisplay]) { 
+      imageUrl = [partnerLogoDict objectForKey:@"meta_url"];
+    } else {
+      imageUrl = [[[partnerLogoDict objectForKey:@"meta_versions"] objectForKey:@"lowres"] objectForKey:@"meta_url"];
+    }
     
     
-        
-    //    self.announcements = [NSMutableArray array];
-    //    
-    //    for(NSDictionary *d in arrayOfAnnouncementDictionaries) {    
-    //      Announcement *announcement = [[Announcement alloc] init];
-    //      [announcement setWithJSONDictionary:d];
-    //      [announcements addObject:announcement];
-    //    }
-    //    
-    //    if ([delegate respondsToSelector:@selector(announcementFetcherDidFinishDownload:withAnnouncements:)]) {
-    //      [delegate performSelector:@selector(announcementFetcherDidFinishDownload:withAnnouncements:) withObject:self withObject:announcements];
-    //    }
+    UIImageView* imageView = [[UIImageView alloc] init];
+    [imageView setImageWithURL:[NSURL URLWithString:imageUrl]];
+    
+    [_appConfigFetcher partnerDataDidReceive:imageView];
+    
   }
   @catch (NSException *e) {
     NSLog(@"Error while parsing JSON and setting app config - parnters %@", [e description]);
-    [_appConfigFetcher connection:aConnection didFailWithError:[NSError errorWithDomain:@"PartnersFetcher" code:0 userInfo:[NSDictionary dictionaryWithObject:_entriesArray forKey:@"entryUrl"]]];
+    [_appConfigFetcher connection:aConnection didFailWithError:[NSError errorWithDomain:@"PartnersFetcher" code:0 userInfo:[NSDictionary dictionaryWithObject:_url forKey:@"entryUrl"]]];
   }
 }
 

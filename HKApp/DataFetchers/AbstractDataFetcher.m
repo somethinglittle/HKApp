@@ -17,7 +17,7 @@
 
 -(void) dealloc;
 {
-  [self.urlConnection cancel];
+  [[self urlConnection] cancel];
 }
 
 
@@ -27,7 +27,7 @@
 -(id) init;
 {
   if (self = [super init]) {
-    self.responseData = [[NSMutableData alloc] init];
+    [self setResponseData:[[NSMutableData alloc] init]];
   }
   return self;
 }
@@ -39,8 +39,8 @@
 
 -(void) makeConnectionWithUrl:(NSString*)url;
 {
-  if (self.urlConnection) {
-    [self.urlConnection cancel];
+  if ([self urlConnection]) {
+    [[self urlConnection] cancel];
   }
   
   NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:url]];
@@ -50,18 +50,18 @@
   
   [request setAllHTTPHeaderFields:headers];
   
-  self.urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+  [self setUrlConnection:[[NSURLConnection alloc] initWithRequest:request delegate:self]];
 }
 
 #pragma mark -
 #pragma mark NSURLConnection Delegate Methods
 
 - (void)connection:(NSURLConnection *)aConnection didReceiveResponse:(NSURLResponse *)response {
-  [self.responseData setLength:0];
+  [[self responseData] setLength:0];
 }
 
 - (void)connection:(NSURLConnection *)aConnection didReceiveData:(NSData *)data {
-  [self.responseData appendData:data];
+  [[self responseData] appendData:data];
 }
 
 - (void)connection:(NSURLConnection *)aConnection didFailWithError:(NSError *)error {
@@ -77,8 +77,7 @@
     NSLog(@"Received authentication challenge");
     
     NSURLCredential *newCredential =[NSURLCredential credentialWithUser:kSRAuthenticationToken password:@"X" persistence:NSURLCredentialPersistenceForSession];
-    
-    [challenge.sender useCredential:newCredential forAuthenticationChallenge:challenge];    
+    [[challenge sender] useCredential:newCredential forAuthenticationChallenge:challenge];
   }
   else {
     [self connection:connection didFailWithError:[NSError errorWithDomain:@"AbstractDataFetcher" code:0 userInfo:nil]];

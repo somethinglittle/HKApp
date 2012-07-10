@@ -17,10 +17,10 @@ NSString *const kSRAccountID = @"4fcf7829b9935e7458000002";
 NSString *const kSRAuthenticationToken = @"NYQrfZJhHfpNe8tJnUFB";
 NSString *const kSRAuthenticationTokenWithWriteAccess = @"";
 
-NSString *const kSRCollectionAttractionID = @"4fdb082ab9935e406e000012";
+NSString *const kSRCollectionAttractionID = @"4fcf7feeb9935e1f2c00002e";
 NSString *const kSRCollectionSpotID = @"4fd010b9b9935e65e2000005";
 NSString *const kSRCollectionConfigID = @"4fdb0793b9935e3ef3000015";
-NSString *const kSRCollectionCreditsID = @"4fdb082ab9935e406e000012";
+NSString *const kSRCollectionPartnersID = @"4fdb082ab9935e406e000012";
 
 NSString *StorageRoomURLChangeMeta(NSString *path) {
   return [NSString stringWithFormat:@"%@?meta_prefix=meta_", path];

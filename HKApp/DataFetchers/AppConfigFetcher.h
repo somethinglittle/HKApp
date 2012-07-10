@@ -13,10 +13,16 @@
 @interface AppConfigFetcher : AbstractDataFetcher {
   AppConfig* _appConfig;
   id<DataRequestConfigInfoDelegate> _delegate;
+  int _requestCount;
+  int _responseCount;
 }
 
--(void) partnerImageDidReceive;
-- (void)connection:(NSURLConnection *)aConnection didFailWithError:(NSError *)error;
+-(id) initWithDelegate:(id<DataRequestConfigInfoDelegate>)delegate;
+
+-(void) partnerDataDidReceive:(UIImageView*)imageView;
+-(void) partnerDataDidError:(NSError*)error;
+
+-(void) connection:(NSURLConnection *)aConnection didFailWithError:(NSError *)error;
 
 @end
 
@@ -24,9 +30,9 @@
 
 @interface PartnersFetcher : AbstractDataFetcher {
   AppConfigFetcher* _appConfigFetcher;
-  NSArray* _entriesArray;
+  NSString* _url;
 }
 
--(id) initWithAppConfigFetcher:(AppConfigFetcher*)appConfigFetcher andEntriesArray:(NSArray *)entriesArray;
+-(id) initWithAppConfigFetcher:(AppConfigFetcher*)appConfigFetcher andUrl:(NSString*)url;
 
 @end

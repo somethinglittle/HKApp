@@ -7,7 +7,7 @@
 //
 
 #import "AppDelegate.h"
-#import "AppConfigFetcher.h"
+#import "AttractionFetcher.h"
 
 @implementation AppDelegate
 
@@ -23,7 +23,7 @@
   [self.window makeKeyAndVisible];
   
 #pragma mark - Data Fetcher Test START
-  [[[AppConfigFetcher alloc] init] fetchData];
+  [[[AttractionFetcher alloc] initWithDelegate:nil withManagedObjectContext:self.managedObjectContext] fetchData];
   
   
   return YES;

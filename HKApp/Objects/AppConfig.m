@@ -10,7 +10,7 @@
 
 @implementation AppConfig
 
-@synthesize appVersion, featuringNumber, credits;
+@synthesize appVersion, featuringNumber, partnersArray;
 
 -(id) init;
 {
@@ -24,9 +24,7 @@
 {
   self.appVersion = NilOrValue([aDictionary objectForKey:@"app_version"]);
   self.featuringNumber = NilOrValue([aDictionary objectForKey:@"featuring_number"]);
-  
-  NSDictionary* creditsDict = [aDictionary objectForKey:@"credits"];
-  NSLog(@"DEBUG LOGGER - creditsDict: %@", creditsDict);
+  self.partnersArray = NilOrValue([aDictionary objectForKey:@"partnersArray"]);
 }
 
 @end
